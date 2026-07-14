@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Case #2026 — Prom Heist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07070a; --panel:#0f0f14; --ink:#e9e6dc; --muted:#8b8676;
+    --gold:#d4af37; --gold-2:#f6d67a; --red:#c8102e; --neon:#22d3ee;
+    --paper:#e8dcc0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Special Elite',serif;overflow-x:hidden}
+  body{cursor:none}
+  a,button{font:inherit;color:inherit}
+  /* ================= Cursor Key ================= */
+  #keyCursor{position:fixed;left:0;top:0;width:26px;height:14px;pointer-events:none;z-index:9999;transform:translate(-4px,-7px) rotate(0deg);filter:drop-shadow(0 0 6px rgba(212,175,55,.7));transition:transform .05s linear}
+  /* ================= Opening ================= */
+  #opening{position:fixed;inset:0;background:#000;z-index:9000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--gold);font-family:'JetBrains Mono',monospace}
+  #opening .line{min-height:1.4em;letter-spacing:.2em;font-size:clamp(14px,2.2vw,22px);text-align:center;padding:0 20px}
+  #opening .stamp{margin-top:24px;border:3px solid var(--red);color:var(--red);padding:10px 22px;font-family:'Bebas Neue',sans-serif;letter-spacing:.35em;font-size:clamp(20px,4vw,42px);transform:rotate(-4deg);opacity:0}
+  #opening.done{animation:openFade 1.2s ease forwards;animation-delay:.2s}
+  @keyframes openFade{to{opacity:0;visibility:hidden}}
+  .blink::after{content:"_";animation:blink 1s steps(2) infinite;color:var(--gold)}
+  @keyframes blink{50%{opacity:0}}
+  /* ================= Background ================= */
+  .bg-layer{position:fixed;inset:0;pointer-events:none;z-index:0}
+  #blueprint{background:
+    radial-gradient(ellipse at 50% 40%, rgba(20,30,50,.6), transparent 70%),
+    linear-gradient(#07070a,#07070a);
+  }
+  #blueprint svg{width:100%;height:100%;opacity:.18}
+  #vaultBg{display:flex;align-items:center;justify-content:center;opacity:.18}
+  #vaultBg .door{width:min(70vmin,700px);height:min(70vmin,700px);border-radius:50%;border:8px solid #2a2a2f;background:
+    radial-gradient(circle at 30% 30%, #2b2b32, #0e0e12 70%);
+    box-shadow:inset 0 0 80px rgba(0,0,0,.9), 0 0 60px rgba(0,0,0,.7);position:relative}
+  #vaultBg .door::before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px dashed rgba(212,175,55,.35)}
+  #vaultBg .door::after{content:"";position:absolute;left:50%;top:50%;width:60%;height:60%;transform:translate(-50%,-50%);border-radius:50%;border:2px solid rgba(212,175,55,.25)}
+  #vaultBg .spoke{position:absolute;left:50%;top:50%;width:70%;height:6px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent);transform:translate(-50%,-50%) rotate(var(--r,0deg))}
+  .lasers{overflow:hidden}
+  .laser{position:absolute;left:-20%;height:1.5px;width:140%;background:linear-gradient(90deg,transparent,rgba(200,16,46,.9),transparent);box-shadow:0 0 8px rgba(200,16,46,.9),0 0 22px rgba(200,16,46,.5);transform-origin:center;animation:laserSweep var(--dur,9s) linear infinite;opacity:.7}
+  @keyframes laserSweep{0%{transform:translateY(-40px) rotate(var(--a,4deg))}100%{transform:translateY(120vh) rotate(var(--a,4deg))}}
+  #particles{position:fixed;inset:0;z-index:1;pointer-events:none}
+  .fingerprint{position:fixed;right:2vw;bottom:2vw;width:220px;height:220px;opacity:.06;z-index:0;pointer-events:none}
+  .tape{position:fixed;top:22px;left:-70px;transform:rotate(-18deg);background:repeating-linear-gradient(45deg,#f7c22a 0 22px,#111 22px 44px);color:#111;font-family:'Bebas Neue';letter-spacing:.4em;padding:8px 90px;font-size:20px;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+  /* ================= Layout ================= */
+  main{position:relative;z-index:5;min-height:100vh;padding:80px 24px 120px;display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:48px;max-width:1400px;margin:0 auto}
+  @media (max-width:900px){main{grid-template-columns:1fr;padding-top:70px}}
+  /* Case file folder */
+  .folder{background:linear-gradient(180deg,#efe3c4,#dccfa8);color:#1a1a1a;border-radius:6px;padding:26px 26px 30px;box-shadow:0 30px 60px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.1);position:relative;font-family:'Special Elite';transform:rotate(-1.2deg);animation:float 8s ease-in-out infinite}
+  .folder::before{content:"";position:absolute;top:-14px;left:22px;width:140px;height:22px;background:#c8b98a;border-radius:6px 6px 0 0;box-shadow:inset 0 -2px 0 rgba(0,0,0,.15)}
+  @keyframes float{50%{transform:rotate(-1.2deg) translateY(-8px)}}
+  .folder h2{font-family:'Bebas Neue';letter-spacing:.15em;font-size:34px;margin:0 0 4px;color:#111}
+  .folder .sub{color:#5a4a1a;font-size:12px;letter-spacing:.3em;margin-bottom:14px}
+  .row{margin:14px 0;border-top:1px dashed rgba(0,0,0,.35);padding-top:10px}
+  .row .k{font-family:'Bebas Neue';letter-spacing:.2em;font-size:14px;color:#7a1a1a}
+  .row .v{font-size:16px;line-height:1.4}
+  .evidence li{margin:4px 0}
+  .evidence li::marker{color:#0a7a2f}
+  .stamp-top{position:absolute;top:14px;right:-10px;border:3px solid var(--red);color:var(--red);padding:6px 12px;font-family:'Bebas Neue';letter-spacing:.3em;transform:rotate(9deg);font-size:18px;opacity:.9}
+  /* Center */
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:34px;position:relative}
+  .poster{font-family:'Bebas Neue',sans-serif;line-height:.92;font-size:clamp(64px,13vw,180px);letter-spacing:.02em;color:#fff;text-shadow:0 0 24px rgba(212,175,55,.35),0 0 60px rgba(212,175,55,.2);background:linear-gradient(180deg,#fff 0%,#f6d67a 50%,#8a6a12 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
+  .poster span{display:block}
+  .btns{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;position:relative}
+  .btn{position:relative;padding:18px 28px;border:2px solid;border-radius:2px;font-family:'Bebas Neue';letter-spacing:.28em;font-size:22px;background:rgba(10,10,14,.7);backdrop-filter:blur(6px);cursor:none;transition:transform .2s ease, box-shadow .3s ease}
+  .btn.yes{color:#7bffb0;border-color:#22c55e;box-shadow:0 0 18px rgba(34,197,94,.4),inset 0 0 30px rgba(34,197,94,.15)}
+  .btn.yes:hover{transform:scale(1.06);box-shadow:0 0 28px rgba(34,197,94,.7)}
+  .btn.no{color:#ff6b7a;border-color:var(--red);box-shadow:0 0 18px rgba(200,16,46,.4),inset 0 0 30px rgba(200,16,46,.15);position:relative}
+  .btn .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:currentColor;margin-right:10px;box-shadow:0 0 12px currentColor;vertical-align:middle}
+  /* Smoke clouds */
+  .smoke{position:fixed;pointer-events:none;z-index:50;padding:6px 12px;border-radius:20px;font-family:'Special Elite';font-size:14px;color:#fff;background:radial-gradient(circle,rgba(180,180,180,.35),rgba(180,180,180,0) 70%);text-shadow:0 1px 2px rgba(0,0,0,.9);animation:puff 1.5s ease-out forwards;white-space:nowrap}
+  .smoke.stamp{background:transparent;color:var(--red);border:3px solid var(--red);font-family:'Bebas Neue';letter-spacing:.3em;padding:6px 14px;transform:rotate(var(--rot,-8deg));text-shadow:none;box-shadow:0 0 12px rgba(200,16,46,.3)}
+  @keyframes puff{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-90%) scale(1.4)}}
+  /* Notifications */
+  #notifs{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:320px}
+  .notif{background:rgba(10,10,14,.85);border-left:4px solid var(--red);color:#fff;padding:12px 14px;border-radius:4px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:.05em;box-shadow:0 10px 30px rgba(0,0,0,.6);animation:slideIn .5s ease, slideOut .5s ease 4.5s forwards;backdrop-filter:blur(8px)}
+  .notif b{color:var(--gold);display:block;margin-bottom:4px;letter-spacing:.2em;font-size:11px}
+  .notif.ok{border-left-color:#22c55e}
+  .notif.ok b{color:#7bffb0}
+  @keyframes slideIn{from{transform:translateX(120%);opacity:0}}
+  @keyframes slideOut{to{transform:translateX(120%);opacity:0}}
+  /* Detective board floating hints */
+  .pin{position:fixed;z-index:2;opacity:.5;pointer-events:none;font-family:'Special Elite';color:#c9b47a;font-size:12px}
+  /* Vault reveal */
+  #reveal{position:fixed;inset:0;background:#000;z-index:8000;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;overflow:hidden}
+  #reveal.on{display:flex}
+  #reveal .vault{position:relative;width:min(90vmin,720px);height:min(90vmin,720px);border-radius:50%;background:radial-gradient(circle at 30% 30%,#3a3a42,#0a0a0e 70%);box-shadow:inset 0 0 100px #000, 0 0 80px rgba(212,175,55,.35)}
+  #reveal .half{position:absolute;top:0;height:100%;width:50%;background:radial-gradient(circle at 30% 30%,#3a3a42,#0a0a0e 70%);transition:transform 2.5s cubic-bezier(.7,0,.3,1)}
+  #reveal .half.l{left:0;border-radius:100% 0 0 100%;transform-origin:right center}
+  #reveal .half.r{right:0;border-radius:0 100% 100% 0;transform-origin:left center}
+  #reveal.open .half.l{transform:rotateY(-160deg)}
+  #reveal.open .half.r{transform:rotateY(160deg)}
+  #reveal .glow{position:absolute;inset:0;background:radial-gradient(circle,#fff6c8,rgba(255,220,120,.4) 30%,transparent 70%);opacity:0;transition:opacity 2s ease 1s;border-radius:50%}
+  #reveal.open .glow{opacity:1}
+  #reveal .msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#111;font-family:'Bebas Neue';letter-spacing:.15em;opacity:0;transition:opacity 1s ease 2.8s;padding:20px;text-align:center}
+  #reveal.open .msg{opacity:1}
+  #reveal .msg h1{font-size:clamp(40px,9vw,110px);margin:0;color:#3b2a00;text-shadow:0 2px 0 rgba(255,255,255,.4)}
+  #reveal .msg p{font-family:'Special Elite';color:#3b2a00;font-size:clamp(14px,2vw,20px);margin:8px 0}
+  #reveal .msg .heart{margin-top:20px;font-size:clamp(30px,6vw,60px);color:var(--red);text-shadow:0 0 20px rgba(200,16,46,.7)}
+  /* Money bags */
+  .bag{position:fixed;bottom:10px;font-size:44px;z-index:3;transition:transform .3s ease;user-select:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.6))}
+  .bag:hover{transform:translateY(-6px) rotate(-8deg) scale(1.15)}
+  .bag.b1{left:10px}.bag.b2{left:70px;font-size:36px}.bag.b3{right:10px}.bag.b4{right:70px;font-size:36px}
+  @media(max-width:700px){.bag{font-size:32px}.bag.b2,.bag.b4{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ============ Opening ============ -->
+<div id="opening">
+  <div class="line" id="l1"></div>
+  <div class="line" id="l2" style="margin-top:22px"></div>
+  <div class="line" id="l3" style="margin-top:22px"></div>
+  <div class="stamp" id="stamp">CONFIDENTIAL CASE FILE</div>
+</div>
+
+<!-- ============ Background ============ -->
+<div class="bg-layer" id="blueprint">
+  <svg viewBox="0 0 1200 800" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M40 0H0V40" fill="none" stroke="#4a9fd6" stroke-width=".5"/>
+      </pattern>
+    </defs>
+    <rect width="1200" height="800" fill="url(#grid)"/>
+    <circle cx="600" cy="400" r="260" fill="none" stroke="#4a9fd6" stroke-width="1"/>
+    <circle cx="600" cy="400" r="180" fill="none" stroke="#4a9fd6" stroke-width="1"/>
+    <circle cx="600" cy="400" r="90" fill="none" stroke="#4a9fd6" stroke-width="1"/>
+    <line x1="0" y1="400" x2="1200" y2="400" stroke="#4a9fd6" stroke-width=".5"/>
+    <line x1="600" y1="0" x2="600" y2="800" stroke="#4a9fd6" stroke-width=".5"/>
+  </svg>
+</div>
+<div class="bg-layer" id="vaultBg">
+  <div class="door">
+    <div class="spoke" style="--r:0deg"></div>
+    <div class="spoke" style="--r:45deg"></div>
+    <div class="spoke" style="--r:90deg"></div>
+    <div class="spoke" style="--r:135deg"></div>
+  </div>
+</div>
+<div class="bg-layer lasers" id="lasers"></div>
+<canvas id="particles"></canvas>
+
+<svg class="fingerprint" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#d4af37" stroke-width="1.2">
+    <path d="M50 10c22 0 40 18 40 40M50 20c17 0 30 13 30 30M50 30c11 0 20 9 20 20M50 40c6 0 10 4 10 10M20 60c0-17 13-30 30-30M15 70c0-22 18-40 40-40M25 78c0-14 12-26 26-26M35 84c0-9 7-16 16-16"/>
+  </g>
+</svg>
+
+<div class="tape">CRIME SCENE • DO NOT CROSS • CRIME SCENE •</div>
+
+<div class="bag b1">💰</div>
+<div class="bag b2">💰</div>
+<div class="bag b3">🪙</div>
+<div class="bag b4">💵</div>
+
+<!-- ============ Main ============ -->
+<main>
+  <aside class="folder">
+    <div class="stamp-top">TOP SECRET</div>
+    <div class="sub">FEDERAL BUREAU • PROM CRIMES DIVISION</div>
+    <h2>CASE #2026</h2>
+
+    <div class="row">
+      <div class="k">Target</div>
+      <div class="v">[REDACTED] — <em>can't tell you.</em></div>
+    </div>
+    <div class="row">
+      <div class="k">Crime</div>
+      <div class="v">Stealing my heart. In broad daylight.</div>
+    </div>
+    <div class="row">
+      <div class="k">Evidence</div>
+      <ul class="v evidence" style="padding-left:20px;margin:6px 0">
+        <li>Gorgeous</li>
+        <li>Funny</li>
+        <li>Makes me smile</li>
+        <li>Wanted for Grand Theft Feelings</li>
+      </ul>
+    </div>
+    <div class="row">
+      <div class="k">Reward</div>
+      <div class="v">One unforgettable prom.</div>
+    </div>
+  </aside>
+
+  <section class="center">
+    <div class="poster" aria-label="Can I steal you for prom">
+      <span>CAN I</span><span>STEAL</span><span>YOU FOR</span><span>PROM?</span>
+    </div>
+    <div class="btns">
+      <button class="btn yes" id="yesBtn"><span class="dot"></span>JOIN THE HEIST</button>
+      <button class="btn no"  id="noBtn"><span class="dot"></span>CALL THE POLICE</button>
+    </div>
+    <div style="opacity:.55;font-size:12px;letter-spacing:.3em;margin-top:6px">CLASSIFIED • EYES ONLY • CASE #2026</div>
+  </section>
+</main>
+
+<div id="notifs"></div>
+
+<!-- Cursor -->
+<svg id="keyCursor" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#d4af37" stroke="#7a5a10" stroke-width="1">
+    <circle cx="10" cy="15" r="8"/>
+    <circle cx="10" cy="15" r="3" fill="#0a0a0e"/>
+    <rect x="16" y="12" width="38" height="6" rx="1"/>
+    <rect x="42" y="18" width="4" height="6"/>
+    <rect x="50" y="18" width="4" height="6"/>
+  </g>
+</svg>
+
+<!-- Reveal -->
+<div id="reveal">
+  <div class="vault">
+    <div class="glow"></div>
+    <div class="half l"></div>
+    <div class="half r"></div>
+    <div class="msg">
+      <h1>MISSION SUCCESS</h1>
+      <p>The target has agreed to join the operation.</p>
+      <div class="heart">See you at prom ❤</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ Opening sequence ============ */
+const l1=document.getElementById('l1'),l2=document.getElementById('l2'),l3=document.getElementById('l3'),stamp=document.getElementById('stamp'),opening=document.getElementById('opening');
+async function type(el,txt,delay=45){el.classList.add('blink');for(let i=0;i<=txt.length;i++){el.textContent=txt.slice(0,i);await new Promise(r=>setTimeout(r,delay))}el.classList.remove('blink')}
+(async()=>{
+  await new Promise(r=>setTimeout(r,300));
+  await type(l1,'TOP SECRET',70);
+  await new Promise(r=>setTimeout(r,400));
+  await type(l2,'Federal Bureau of Investigation',35);
+  await type(l3,'Prom Crimes Division',35);
+  await new Promise(r=>setTimeout(r,500));
+  stamp.style.opacity=1;stamp.animate([{transform:'rotate(-25deg) scale(2)',opacity:0},{transform:'rotate(-4deg) scale(1)',opacity:1}],{duration:450,easing:'cubic-bezier(.2,1.5,.4,1)',fill:'forwards'});
+  await new Promise(r=>setTimeout(r,1400));
+  opening.classList.add('done');
+  setTimeout(()=>opening.remove(),1400);
+  startAmbient();
+})();
+
+/* ============ Lasers ============ */
+const lasers=document.getElementById('lasers');
+for(let i=0;i<6;i++){
+  const l=document.createElement('div');l.className='laser';
+  l.style.setProperty('--dur',(6+Math.random()*8)+'s');
+  l.style.setProperty('--a',(Math.random()*8-4)+'deg');
+  l.style.animationDelay=(-Math.random()*10)+'s';
+  lasers.appendChild(l);
+}
+
+/* ============ Particles (dust/diamonds) ============ */
+const cvs=document.getElementById('particles'),ctx=cvs.getContext('2d');
+let W,H,parts=[];
+function resize(){W=cvs.width=innerWidth;H=cvs.height=innerHeight}
+addEventListener('resize',resize);resize();
+for(let i=0;i<70;i++)parts.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+.3,vy:.15+Math.random()*.4,vx:(Math.random()-.5)*.2,a:Math.random()*.6+.2,d:Math.random()<.1});
+function tick(){
+  ctx.clearRect(0,0,W,H);
+  for(const p of parts){
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.y>H)p.y=-4,p.x=Math.random()*W;
+    if(p.d){ctx.fillStyle=`rgba(246,214,122,${p.a})`;ctx.beginPath();ctx.moveTo(p.x,p.y-p.r*2);ctx.lineTo(p.x+p.r*1.5,p.y);ctx.lineTo(p.x,p.y+p.r*2);ctx.lineTo(p.x-p.r*1.5,p.y);ctx.closePath();ctx.fill()}
+    else{ctx.fillStyle=`rgba(220,215,190,${p.a*.5})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()}
+  }
+  requestAnimationFrame(tick);
+}
+tick();
+
+/* ============ Cursor ============ */
+const cursor=document.getElementById('keyCursor');
+let mx=innerWidth/2,my=innerHeight/2;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.transform=`translate(${mx-4}px,${my-7}px) rotate(${Math.sin(Date.now()/400)*10}deg)`});
+addEventListener('mousedown',()=>cursor.style.transform+=' scale(.85)');
+addEventListener('mouseup',()=>{});
+
+/* ============ NO button gliding chase ============ */
+const noBtn=document.getElementById('noBtn'),yesBtn=document.getElementById('yesBtn');
+let nx=null,ny=null,nvx=0,nvy=0,attempts=0,alarmSince=0;
+function initNoPos(){const r=noBtn.getBoundingClientRect();nx=r.left+r.width/2;ny=r.top+r.height/2;noBtn.style.position='fixed';noBtn.style.left=nx-r.width/2+'px';noBtn.style.top=ny-r.height/2+'px';noBtn.style.margin=0}
+setTimeout(initNoPos,300);
+addEventListener('resize',()=>{nx=null;setTimeout(initNoPos,50)});
+
+const calm=['Nice try.','Access denied.','Nuh-uh.','Nope.','Denied.','Close one!','You blinked.'];
+const middle=['You\'re still going.','The vault says yes.','Mission impossible.','404: No not found.','Bank security activated.','You\'ll never catch me.','Try harder.','That\'s suspicious.','Criminal detected.','System override.','Permission denied.','Wrong answer.','Escape failed.','Case closed.','The evidence disagrees.','Target locked.','You almost had it.','Still nope.'];
+const desperate=['Seriously?','Give up already.','I wasn\'t programmed to let you say no.','You\'re getting closer...','Fine... but I\'m still moving.'];
+const stamps=['DENIED','CLASSIFIED','REDACTED','EVIDENCE','TOP SECRET','CASE CLOSED'];
+
+function puff(x,y){
+  const el=document.createElement('div');
+  const useStamp=Math.random()<0.28;
+  if(useStamp){el.className='smoke stamp';el.textContent=stamps[Math.floor(Math.random()*stamps.length)];el.style.setProperty('--rot',(Math.random()*20-10)+'deg')}
+  else{
+    el.className='smoke';
+    let pool=calm;
+    if(attempts>8&&attempts<=20)pool=middle;
+    if(attempts>20)pool=desperate;
+    el.textContent=pool[Math.floor(Math.random()*pool.length)];
+  }
+  el.style.left=x+'px';el.style.top=y+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1500);
+}
+
+let lastPuff=0;
+function chaseTick(){
+  if(nx!==null){
+    const r=noBtn.getBoundingClientRect();
+    const w=r.width,h=r.height;
+    const dx=nx-mx,dy=ny-my,dist=Math.hypot(dx,dy);
+    const threshold=160;
+    if(dist<threshold){
+      const force=(threshold-dist)/threshold;
+      const ang=Math.atan2(dy,dx);
+      // add tangential jitter so it curves away rather than straight line
+      const tang=ang+(Math.random()*0.6-0.3);
+      nvx+=Math.cos(tang)*force*1.6;
+      nvy+=Math.sin(tang)*force*1.6;
+      const now=performance.now();
+      if(now-lastPuff>110){
+        lastPuff=now;
+        attempts++;
+        puff(nx-Math.cos(ang)*w*0.4, ny-Math.sin(ang)*h*0.4);
+        if(attempts%15===0)notify('🚨 ALARM','Suspect keeps chasing the NO button.',false);
+      }
+    }
+    // gentle return-to-neighborhood pull toward yes button area (right side of yes)
+    const yr=yesBtn.getBoundingClientRect();
+    const targetX=yr.right+90+w/2, targetY=yr.top+yr.height/2;
+    nvx+=(targetX-nx)*0.0015;
+    nvy+=(targetY-ny)*0.0015;
+    // friction
+    nvx*=0.88;nvy*=0.88;
+    nx+=nvx;ny+=nvy;
+    // bounds
+    const pad=10;
+    if(nx-w/2<pad){nx=w/2+pad;nvx*=-.4}
+    if(nx+w/2>innerWidth-pad){nx=innerWidth-w/2-pad;nvx*=-.4}
+    if(ny-h/2<pad){ny=h/2+pad;nvy*=-.4}
+    if(ny+h/2>innerHeight-pad){ny=innerHeight-h/2-pad;nvy*=-.4}
+    // avoid yes overlap
+    const yc={x:yr.left+yr.width/2,y:yr.top+yr.height/2,r:Math.max(yr.width,yr.height)/2+60};
+    const ddx=nx-yc.x,ddy=ny-yc.y,dd=Math.hypot(ddx,ddy);
+    if(dd<yc.r){const a=Math.atan2(ddy,ddx);nx=yc.x+Math.cos(a)*yc.r;ny=yc.y+Math.sin(a)*yc.r}
+    noBtn.style.left=(nx-w/2)+'px';
+    noBtn.style.top=(ny-h/2)+'px';
+    noBtn.style.transform=`rotate(${nvx*1.5}deg)`;
+  }
+  requestAnimationFrame(chaseTick);
+}
+requestAnimationFrame(chaseTick);
+noBtn.addEventListener('click',e=>{e.preventDefault();puff(nx,ny);attempts+=3});
+
+/* ============ Notifications ============ */
+const notifs=document.getElementById('notifs');
+const notifPool=[
+  ['🚨 SECURITY ALERT','Attempt to decline invitation detected.',false],
+  ['VAULT INTEGRITY','100% — all diamonds accounted for.',true],
+  ['SURVEILLANCE','Target still attempting escape...',false],
+  ['MOTION DETECTED','Cursor spotted near NO button.',false],
+  ['SYSTEM','Fingerprint match: 99.9% adorable.',true],
+  ['DISPATCH','Backup en route. Say yes.',false],
+  ['PERIMETER','Laser grid recalibrated.',true],
+];
+function notify(title,body,ok){
+  const n=document.createElement('div');n.className='notif'+(ok?' ok':'');
+  n.innerHTML=`<b>${title}</b>${body}`;notifs.appendChild(n);
+  setTimeout(()=>n.remove(),5200);
+  beep(ok?880:420,.08);
+}
+function ambientNotify(){const [t,b,o]=notifPool[Math.floor(Math.random()*notifPool.length)];notify(t,b,o);setTimeout(ambientNotify,10000+Math.random()*6000)}
+
+/* ============ Sound ============ */
+let AC;function ac(){AC=AC||new (window.AudioContext||window.webkitAudioContext)();return AC}
+function beep(freq=600,dur=.1,type='sine',vol=.05){try{const a=ac(),o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=freq;g.gain.value=vol;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);o.stop(a.currentTime+dur)}catch(e){}}
+function chaChing(){beep(880,.08,'square',.06);setTimeout(()=>beep(1320,.14,'square',.06),90)}
+function vaultClunk(){beep(80,.25,'sawtooth',.12)}
+
+function startAmbient(){setTimeout(ambientNotify,3000)}
+
+/* ============ YES → reveal ============ */
+const reveal=document.getElementById('reveal');
+yesBtn.addEventListener('click',()=>{
+  chaChing();
+  document.body.style.cursor='none';
+  reveal.classList.add('on');
+  setTimeout(()=>{vaultClunk();setTimeout(vaultClunk,500);setTimeout(vaultClunk,1000);reveal.classList.add('open')},250);
+  // confetti / hearts
+  for(let i=0;i<60;i++){
+    const h=document.createElement('div');h.textContent=Math.random()<.5?'❤':'✨';
+    h.style.cssText=`position:fixed;left:${50+Math.random()*10-5}%;top:60%;font-size:${16+Math.random()*20}px;z-index:8500;color:${Math.random()<.5?'#c8102e':'#f6d67a'};pointer-events:none`;
+    document.body.appendChild(h);
+    const dx=(Math.random()-.5)*innerWidth,dy=-innerHeight*(0.4+Math.random()*0.5);
+    h.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${Math.random()*720-360}deg)`,opacity:0}],{duration:2200+Math.random()*1200,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
+    setTimeout(()=>h.remove(),3600);
+  }
+});
+
+/* ============ Bags jiggle on hover ============ */
+document.querySelectorAll('.bag').forEach(b=>{
+  b.addEventListener('mouseenter',()=>{b.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-8px) rotate(-10deg)'},{transform:'translateY(0) rotate(6deg)'},{transform:'translateY(0) rotate(0)'}],{duration:500});beep(300,.05,'triangle',.04)});
+});
+</script>
+</body>
+</html>
